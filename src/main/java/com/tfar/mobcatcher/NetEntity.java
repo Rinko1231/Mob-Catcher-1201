@@ -46,26 +46,26 @@ public class NetEntity extends ProjectileItemEntity {
    * @param result
    */
   @Override
-  protected void onImpact(@Nonnull RayTraceResult result) {
-    if (world.isRemote || !this.isAlive()) return;
+  protected void onHit(@Nonnull RayTraceResult result) {
+    if (level.isClientSide || !this.isAlive()) return;
     RayTraceResult.Type type = result.getType();
     boolean containsEntity = containsEntity(stack);
     if (containsEntity) {
-      Entity entity = NetItem.getEntityFromStack(stack, world, true);
+      Entity entity = NetItem.getEntityFromStack(stack, level, true);
       BlockPos pos;
       if (type == RayTraceResult.Type.ENTITY)
-        pos = ((EntityRayTraceResult) result).getEntity().getPosition();
+        pos = ((EntityRayTraceResult) result).getEntity().blockPosition();
       else
-        pos = ((BlockRayTraceResult) result).getPos();
-      entity.setPositionAndRotation(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0, 0);
-      stack.removeChildTag(NetItem.KEY);
-      world.addEntity(entity);
+        pos = ((BlockRayTraceResult) result).getBlockPos();
+      entity.absMoveTo(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0, 0);
+      stack.removeTagKey(NetItem.KEY);
+      level.addFreshEntity(entity);
       ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
-      world.addEntity(emptynet);
-      if (stack.isDamageable()) {
-        Entity owner = this.func_234616_v_();
+      level.addFreshEntity(emptynet);
+      if (stack.isDamageableItem()) {
+        Entity owner = this.getOwner();
         if (owner instanceof LivingEntity) {
-          stack.damageItem(1, (LivingEntity)owner, playerEntity -> {
+          stack.hurtAndBreak(1, (LivingEntity)owner, playerEntity -> {
           });
         }
       }
@@ -79,36 +79,36 @@ public class NetEntity extends ProjectileItemEntity {
         ItemStack newStack = stack.copy();
         newStack.getOrCreateTag().put(NetItem.KEY,nbt);
         ItemEntity itemEntity = createDroppedItemAtEntity(target,newStack);
-        world.addEntity(itemEntity);
+        level.addFreshEntity(itemEntity);
         target.remove();
       } else {
         ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
-        world.addEntity(emptynet);
+        level.addFreshEntity(emptynet);
       }
     }
     this.remove();
   }
 
   protected ItemEntity createDroppedItemAtEntity(Entity entity,ItemStack stack) {
-    return new ItemEntity(this.world, entity.getPosX(), entity.getPosY(), entity.getPosZ(), stack);
+    return new ItemEntity(this.level, entity.getX(), entity.getY(), entity.getZ(), stack);
   }
 
-  public void writeAdditional(CompoundNBT nbt) {
-    super.writeAdditional(nbt);
+  public void addAdditionalSaveData(CompoundNBT nbt) {
+    super.addAdditionalSaveData(nbt);
     if (!stack.isEmpty()) {
-      nbt.put("mobcatcher", stack.write(stack.getOrCreateTag()));
+      nbt.put("mobcatcher", stack.save(stack.getOrCreateTag()));
     }
 
   }
 
-  public void readAdditional(CompoundNBT nbt) {
-    super.readAdditional(nbt);
-    stack = ItemStack.read(nbt.getCompound("mobcatcher"));
+  public void readAdditionalSaveData(CompoundNBT nbt) {
+    super.readAdditionalSaveData(nbt);
+    stack = ItemStack.of(nbt.getCompound("mobcatcher"));
   }
 
   @Nonnull
   @Override
-  public IPacket<?> createSpawnPacket() {
+  public IPacket<?> getAddEntityPacket() {
     return NetworkHooks.getEntitySpawningPacket(this);
   }
 }

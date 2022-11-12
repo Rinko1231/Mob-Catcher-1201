@@ -28,14 +28,14 @@ public class ModLangProvider extends LanguageProvider {
     }
 
     public static String getNameFromItem(Item item) {
-        return StringUtils.capitaliseAllWords(item.getTranslationKey().split("\\.")[2].replace("_", " "));
+        return StringUtils.capitaliseAllWords(item.getDescriptionId().split("\\.")[2].replace("_", " "));
     }
 
     public static String getNameFromBlock(Block block) {
-        return StringUtils.capitaliseAllWords(block.getTranslationKey().split("\\.")[2].replace("_", " "));
+        return StringUtils.capitaliseAllWords(block.getDescriptionId().split("\\.")[2].replace("_", " "));
     }
 
     protected void addDesc(Item item,String s) {
-        add(item.getTranslationKey()+".desc",s);
+        add(item.getDescriptionId()+".desc",s);
     }
 }

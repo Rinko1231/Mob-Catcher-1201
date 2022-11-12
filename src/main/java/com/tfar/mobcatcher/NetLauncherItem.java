@@ -13,6 +13,8 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 
+import net.minecraft.item.Item.Properties;
+
 public class NetLauncherItem extends Item {
 
   public NetLauncherItem(Properties properties) {
@@ -20,15 +22,15 @@ public class NetLauncherItem extends Item {
   }
 
   protected ItemStack findNet(PlayerEntity player) {
-    ItemStack stack = player.getHeldItemMainhand();
+    ItemStack stack = player.getMainHandItem();
     if (isCaptureMode(stack)){
-    if (isEmptyNet(player.getHeldItem(Hand.OFF_HAND))) {
-      return player.getHeldItem(Hand.OFF_HAND);
-    } else if (isEmptyNet(player.getHeldItem(Hand.MAIN_HAND))) {
-      return player.getHeldItem(Hand.MAIN_HAND);
+    if (isEmptyNet(player.getItemInHand(Hand.OFF_HAND))) {
+      return player.getItemInHand(Hand.OFF_HAND);
+    } else if (isEmptyNet(player.getItemInHand(Hand.MAIN_HAND))) {
+      return player.getItemInHand(Hand.MAIN_HAND);
     } else {
-      for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
-        ItemStack itemstack = player.inventory.getStackInSlot(i);
+      for (int i = 0; i < player.inventory.getContainerSize(); ++i) {
+        ItemStack itemstack = player.inventory.getItem(i);
 
         if (isEmptyNet(itemstack)) {
           return itemstack;
@@ -37,13 +39,13 @@ public class NetLauncherItem extends Item {
     }
       return ItemStack.EMPTY;
     }
-    if (isFilledNet(player.getHeldItem(Hand.OFF_HAND))) {
-      return player.getHeldItem(Hand.OFF_HAND);
-    } else if (isFilledNet(player.getHeldItem(Hand.MAIN_HAND))) {
-      return player.getHeldItem(Hand.MAIN_HAND);
+    if (isFilledNet(player.getItemInHand(Hand.OFF_HAND))) {
+      return player.getItemInHand(Hand.OFF_HAND);
+    } else if (isFilledNet(player.getItemInHand(Hand.MAIN_HAND))) {
+      return player.getItemInHand(Hand.MAIN_HAND);
     } else {
-      for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
-        ItemStack itemstack = player.inventory.getStackInSlot(i);
+      for (int i = 0; i < player.inventory.getContainerSize(); ++i) {
+        ItemStack itemstack = player.inventory.getItem(i);
 
         if (isFilledNet(itemstack)) {
           return itemstack;
@@ -61,7 +63,7 @@ public class NetLauncherItem extends Item {
   /**
    * Called when the player stops using an Item (stops holding the right mouse button).
    */
-  public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
+  public void releaseUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
     if (entityLiving instanceof PlayerEntity) {
       PlayerEntity player = (PlayerEntity) entityLiving;
       ItemStack stackAmmo = this.findNet(player);
@@ -69,28 +71,28 @@ public class NetLauncherItem extends Item {
       int i = this.getUseDuration(stackAmmo) - timeLeft;
       if (i < 0) return;
 
-      if (!stackAmmo.isEmpty() || player.abilities.isCreativeMode) {
+      if (!stackAmmo.isEmpty() || player.abilities.instabuild) {
         if (stackAmmo.isEmpty()) stackAmmo = new ItemStack(MobCatcher.net_item);
 
         float f = getNetVelocity(i);
 
         if (f >= 0.1) {
 
-          if (!worldIn.isRemote) {
+          if (!worldIn.isClientSide) {
             NetItem itemNet = stackAmmo.getItem() instanceof NetItem ? (NetItem)stackAmmo.getItem() : (NetItem)MobCatcher.net_item;
             NetEntity netEntity = itemNet.createNet(worldIn, player, stackAmmo);
-            netEntity.func_234612_a_(player, player.rotationPitch, player.rotationYaw, 0.0F, f * 3.0F, 0);
+            netEntity.shootFromRotation(player, player.xRot, player.yRot, 0.0F, f * 3.0F, 0);
 
-            worldIn.addEntity(netEntity);
+            worldIn.addFreshEntity(netEntity);
           }
 
-          worldIn.playSound(null, player.getPosX(), player.getPosY(), player.getPosZ(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
+          worldIn.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
 
-          if (!player.abilities.isCreativeMode) {
+          if (!player.abilities.instabuild) {
             stackAmmo.shrink(1);
 
             if (stackAmmo.isEmpty()) {
-              player.inventory.deleteStack(stackAmmo);
+              player.inventory.removeItem(stackAmmo);
             }
           }
         }
@@ -117,30 +119,30 @@ public class NetLauncherItem extends Item {
    * Called when the equipped item is right clicked.
    */
   @Nonnull
-  public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity player, @Nonnull Hand hand) {
-    ItemStack stack = player.getHeldItem(hand);
+  public ActionResult<ItemStack> use(World worldIn, PlayerEntity player, @Nonnull Hand hand) {
+    ItemStack stack = player.getItemInHand(hand);
     if (player.isCrouching()){
       CompoundNBT nbt = stack.getOrCreateTag();
       boolean capture = isCaptureMode(stack);
       nbt.putBoolean("capture",!capture);
       stack.setTag(nbt);
-      player.sendStatusMessage(new TranslationTextComponent(capture ? "mobcatcher.releasing" : "mobcatcher.capturing"),true);
+      player.displayClientMessage(new TranslationTextComponent(capture ? "mobcatcher.releasing" : "mobcatcher.capturing"),true);
       return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
     boolean hasAmmo = !this.findNet(player).isEmpty();
 
-    if (!player.abilities.isCreativeMode && !hasAmmo) {
+    if (!player.abilities.instabuild && !hasAmmo) {
       return new ActionResult<>(ActionResultType.FAIL, stack);
     } else {
-      player.setActiveHand(hand);
+      player.startUsingItem(hand);
       return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
   }
 
   @Override
   @Nonnull
-  public ITextComponent getDisplayName(@Nonnull ItemStack stack) {
-    return new TranslationTextComponent(I18n.format(super.getTranslationKey(stack)) + " ("+I18n.format(isCaptureMode(stack) ? "mobcatcher.capturing": "mobcatcher.releasing")+ ")");
+  public ITextComponent getName(@Nonnull ItemStack stack) {
+    return new TranslationTextComponent(I18n.get(super.getDescriptionId(stack)) + " ("+I18n.get(isCaptureMode(stack) ? "mobcatcher.capturing": "mobcatcher.releasing")+ ")");
   }
 
   //helpers

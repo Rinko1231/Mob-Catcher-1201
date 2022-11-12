@@ -25,6 +25,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import net.minecraft.item.Item.Properties;
+
 public class NetItem extends Item {
 
   public static final String KEY = "entity_holder";
@@ -36,26 +38,26 @@ public class NetItem extends Item {
 
   @Override
   @Nonnull
-  public ActionResultType onItemUse(ItemUseContext context) {
+  public ActionResultType useOn(ItemUseContext context) {
     PlayerEntity player = context.getPlayer();
-    World world = context.getWorld();
+    World world = context.getLevel();
     if (player == null)return ActionResultType.FAIL;
-    ItemStack stack = context.getItem();
-    if (world.isRemote || !containsEntity(stack)) return ActionResultType.FAIL;
+    ItemStack stack = context.getItemInHand();
+    if (world.isClientSide || !containsEntity(stack)) return ActionResultType.FAIL;
     Entity entity = getEntityFromStack(stack, world, true);
-    BlockPos blockPos = context.getPos();
-    entity.setPositionAndRotation(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, 0, 0);
+    BlockPos blockPos = context.getClickedPos();
+    entity.absMoveTo(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, 0, 0);
     stack.setTag(null);
-    world.addEntity(entity);
-    if (this.isDamageable()) {
-      stack.damageItem(1,player,playerEntity -> playerEntity.sendBreakAnimation(context.getHand()));
+    world.addFreshEntity(entity);
+    if (this.canBeDepleted()) {
+      stack.hurtAndBreak(1,player,playerEntity -> playerEntity.broadcastBreakEvent(context.getHand()));
     }
     return ActionResultType.SUCCESS;
   }
 
   @Override
-  public ActionResultType itemInteractionForEntity(ItemStack stack, PlayerEntity player, LivingEntity target, Hand hand) {
-    if (target.getEntityWorld().isRemote || target instanceof PlayerEntity || !target.isAlive() || containsEntity(stack))
+  public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity target, Hand hand) {
+    if (target.getCommandSenderWorld().isClientSide || target instanceof PlayerEntity || !target.isAlive() || containsEntity(stack))
       return ActionResultType.FAIL;
     EntityType<?> entityID = target.getType();
     if (isBlacklisted(entityID)) return ActionResultType.FAIL;
@@ -63,45 +65,45 @@ public class NetItem extends Item {
     CompoundNBT nbt = getNBTfromEntity(target);
     ItemStack newerStack = newStack.split(1);
     newerStack.getOrCreateTag().put(KEY,nbt);
-    player.swingArm(hand);
-    player.setHeldItem(hand, newStack);
-    if(!player.addItemStackToInventory(newerStack)){
-      ItemEntity itemEntity = new ItemEntity(player.world,player.getPosX(),player.getPosY(),player.getPosZ(),newerStack);
-      player.world.addEntity(itemEntity);
+    player.swing(hand);
+    player.setItemInHand(hand, newStack);
+    if(!player.addItem(newerStack)){
+      ItemEntity itemEntity = new ItemEntity(player.level,player.getX(),player.getY(),player.getZ(),newerStack);
+      player.level.addFreshEntity(itemEntity);
     }
     target.remove();
-    player.getCooldownTracker().setCooldown(this, 5);
+    player.getCooldowns().addCooldown(this, 5);
     return ActionResultType.SUCCESS;
   }
 
 
   @Override
   @OnlyIn(Dist.CLIENT)
-  public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-    super.addInformation(stack, worldIn, tooltip, flagIn);
+  public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    super.appendHoverText(stack, worldIn, tooltip, flagIn);
 
    // tooltip.add(new StringTextComponent(stack.getOrCreateTag().toString()));
     if (containsEntity(stack))
       if (!getEntityID(stack).isEmpty()) {
         String s0 = "entity." + getEntityID(stack);
         String s1 = s0.replace(':','.');
-        tooltip.add(new StringTextComponent(I18n.format(s1)));
+        tooltip.add(new StringTextComponent(I18n.get(s1)));
         tooltip.add(new StringTextComponent("Health: " + stack.getTag().getCompound(KEY).getDouble("Health")));
       }
   }
 
   @Override
   @Nonnull
-  public ITextComponent getDisplayName(@Nonnull ItemStack stack) {
+  public ITextComponent getName(@Nonnull ItemStack stack) {
     if (!containsEntity(stack))
-      return super.getDisplayName(stack);
+      return super.getName(stack);
     else {
       String s0 = "entity." + getEntityID(stack);
       String s1 = s0.replace(':', '.');
-      return ((TranslationTextComponent)super.getDisplayName(stack))
-              .appendString(" (")
+      return ((TranslationTextComponent)super.getName(stack))
+              .append(" (")
               .append(new TranslationTextComponent(s1))
-              .appendString(")")
+              .append(")")
       ;
     }
   }
@@ -110,7 +112,7 @@ public class NetItem extends Item {
   {
     ItemStack newStack = stack.copy();
     newStack.setCount(1);
-    return new NetEntity(shooter.getPosX(), shooter.getPosY() + 1.25, shooter.getPosZ(), worldIn, newStack);
+    return new NetEntity(shooter.getX(), shooter.getY() + 1.25, shooter.getZ(), worldIn, newStack);
   }
 
   //helper methods
@@ -132,8 +134,8 @@ public class NetItem extends Item {
   }
 
   public static Entity getEntityFromNBT(CompoundNBT nbt, World world, boolean withInfo) {
-    Entity entity = Registry.ENTITY_TYPE.getOrDefault(new ResourceLocation(getEntityID(nbt))).create(world);
-    if (withInfo) entity.read(nbt);
+    Entity entity = Registry.ENTITY_TYPE.get(new ResourceLocation(getEntityID(nbt))).create(world);
+    if (withInfo) entity.load(nbt);
     return entity;
   }
 
@@ -144,7 +146,7 @@ public class NetItem extends Item {
   public static CompoundNBT getNBTfromEntity(Entity entity) {
     CompoundNBT nbt = new CompoundNBT();
     nbt.putString("entity", entity.getType().getRegistryName().toString());
-    entity.writeUnlessPassenger(nbt);
+    entity.save(nbt);
     return nbt;
   }
 }

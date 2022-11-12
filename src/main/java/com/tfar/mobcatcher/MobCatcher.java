@@ -37,7 +37,7 @@ import javax.annotation.Nonnull;
 public class MobCatcher {
   public static final String MODID = "mobcatcher";
 
-  public static final ITag.INamedTag<EntityType<?>> blacklisted = EntityTypeTags.getTagById(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
+  public static final ITag.INamedTag<EntityType<?>> blacklisted = EntityTypeTags.bind(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
 
   public MobCatcher() {
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
@@ -70,7 +70,7 @@ public class MobCatcher {
 
     public void registerItems(RegistryEvent.Register<Item> e) {
       IForgeRegistry<Item> registry = e.getRegistry();
-      Item.Properties properties = new Item.Properties().group(ItemGroup.COMBAT);
+      Item.Properties properties = new Item.Properties().tab(ItemGroup.TAB_COMBAT);
 
       registerItem(net_item, "net", registry);
       registerItem(new NetLauncherItem(properties), "net_launcher", registry);
@@ -85,28 +85,28 @@ public class MobCatcher {
     }
 
     public void init(FMLCommonSetupEvent event) {
-      DispenserBlock.registerDispenseBehavior(net_item, new ProjectileDispenseBehavior() {
+      DispenserBlock.registerBehavior(net_item, new ProjectileDispenseBehavior() {
         /**
          * Return the projectile entity spawned by this dispense behavior.
          */
         @Nonnull
         @Override
-        protected ProjectileEntity getProjectileEntity(@Nonnull World world, @Nonnull IPosition pos, @Nonnull ItemStack stack) {
+        protected ProjectileEntity getProjectile(@Nonnull World world, @Nonnull IPosition pos, @Nonnull ItemStack stack) {
           ItemStack newStack = stack.copy();
           newStack.setCount(1);
-          return new NetEntity(pos.getX(), pos.getY(), pos.getZ(), world, newStack);
+          return new NetEntity(pos.x(), pos.y(), pos.z(), world, newStack);
         }
       });
     }
 
   public static EntityType<NetEntity> net = EntityType.Builder
-          .<NetEntity>create(NetEntity::new, EntityClassification.MISC)
+          .<NetEntity>of(NetEntity::new, EntityClassification.MISC)
           .setShouldReceiveVelocityUpdates(true)
           .setUpdateInterval(1)
           .setTrackingRange(128)
-          .size(.6f, .6f)
+          .sized(.6f, .6f)
           .build("net");
-  public static Item net_item = new NetItem(new Item.Properties().group(ItemGroup.COMBAT));
+  public static Item net_item = new NetItem(new Item.Properties().tab(ItemGroup.TAB_COMBAT));
 
 
   public static class ServerConfig {

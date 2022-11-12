@@ -14,7 +14,7 @@ public class ModEntityTypeTagsProvider extends EntityTypeTagsProvider {
     }
 
     @Override
-    protected void registerTags() {
-        getOrCreateBuilder(MobCatcher.blacklisted).add(EntityType.PAINTING);
+    protected void addTags() {
+        tag(MobCatcher.blacklisted).add(EntityType.PAINTING);
     }
 }
