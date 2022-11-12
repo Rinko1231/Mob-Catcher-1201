@@ -1,5 +1,6 @@
 package com.tfar.mobcatcher;
 
+import com.tfar.mobcatcher.datagen.ModDatagen;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.SpriteRenderer;
@@ -36,17 +37,16 @@ import javax.annotation.Nonnull;
 public class MobCatcher {
   public static final String MODID = "mobcatcher";
 
-  public static final ITag<EntityType<?>> blacklisted = EntityTypeTags.getTagById(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
+  public static final ITag.INamedTag<EntityType<?>> blacklisted = EntityTypeTags.getTagById(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
 
   public MobCatcher() {
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
     IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+    bus.addListener(ModDatagen::start);
     bus.addGenericListener(Item.class,this::registerItems);
     bus.addGenericListener(EntityType.class,this::registerEntity);
     bus.addListener(this::init);
     bus.addListener(this::configChange);
-
-    //MinecraftForge.EVENT_BUS.addListener(this::playerRespawn);
   }
 
   private void configChange(ModConfig.ModConfigEvent e) {
@@ -73,7 +73,7 @@ public class MobCatcher {
       Item.Properties properties = new Item.Properties().group(ItemGroup.COMBAT);
 
       registerItem(net_item, "net", registry);
-      registerItem(new ItemNetLauncher(properties), "net_launcher", registry);
+      registerItem(new NetLauncherItem(properties), "net_launcher", registry);
     }
 
     private static void registerItem(Item item, String name, IForgeRegistry<Item> registry) {
@@ -106,7 +106,7 @@ public class MobCatcher {
           .setTrackingRange(128)
           .size(.6f, .6f)
           .build("net");
-  public static Item net_item = new ItemNet(new Item.Properties().group(ItemGroup.COMBAT));
+  public static Item net_item = new NetItem(new Item.Properties().group(ItemGroup.COMBAT));
 
 
   public static class ServerConfig {

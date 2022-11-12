@@ -25,12 +25,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ItemNet extends Item {
+public class NetItem extends Item {
 
   public static final String KEY = "entity_holder";
 
 
-  public ItemNet(Properties properties) {
+  public NetItem(Properties properties) {
     super(properties);
   }
 
@@ -82,8 +82,8 @@ public class ItemNet extends Item {
 
    // tooltip.add(new StringTextComponent(stack.getOrCreateTag().toString()));
     if (containsEntity(stack))
-      if (!getID(stack).isEmpty()) {
-        String s0 = "entity." + getID(stack);
+      if (!getEntityID(stack).isEmpty()) {
+        String s0 = "entity." + getEntityID(stack);
         String s1 = s0.replace(':','.');
         tooltip.add(new StringTextComponent(I18n.format(s1)));
         tooltip.add(new StringTextComponent("Health: " + stack.getTag().getCompound(KEY).getDouble("Health")));
@@ -94,10 +94,16 @@ public class ItemNet extends Item {
   @Nonnull
   public ITextComponent getDisplayName(@Nonnull ItemStack stack) {
     if (!containsEntity(stack))
-      return new TranslationTextComponent(super.getTranslationKey(stack) + ".name");
-    String s0 = "entity." + getID(stack);
-    String s1 = s0.replace(':','.');
-    return new TranslationTextComponent(I18n.format(super.getTranslationKey(stack) + ".name") +": "+ I18n.format(s1));
+      return super.getDisplayName(stack);
+    else {
+      String s0 = "entity." + getEntityID(stack);
+      String s1 = s0.replace(':', '.');
+      return ((TranslationTextComponent)super.getDisplayName(stack))
+              .appendString(" (")
+              .append(new TranslationTextComponent(s1))
+              .appendString(")")
+      ;
+    }
   }
 
   public NetEntity createNet(World worldIn, LivingEntity shooter, ItemStack stack)
@@ -113,20 +119,20 @@ public class ItemNet extends Item {
     return stack.hasTag() && stack.getTag().contains(KEY);
   }
 
-  public static String getID(ItemStack stack) {
-    return getID(stack.getTag().getCompound(KEY));
+  public static String getEntityID(ItemStack stack) {
+    return getEntityID(stack.getTag().getCompound(KEY));
   }
 
-  public static String getID(CompoundNBT nbt) {
+  public static String getEntityID(CompoundNBT nbt) {
     return nbt.getString("entity");
   }
 
-  public boolean isBlacklisted(EntityType<?> entity) {
-    return MobCatcher.blacklisted.contains(entity);
+  public static boolean isBlacklisted(EntityType<?> type) {
+    return type == EntityType.PLAYER || MobCatcher.blacklisted.contains(type);
   }
 
   public static Entity getEntityFromNBT(CompoundNBT nbt, World world, boolean withInfo) {
-    Entity entity = Registry.ENTITY_TYPE.getOrDefault(new ResourceLocation(nbt.getString("entity"))).create(world);
+    Entity entity = Registry.ENTITY_TYPE.getOrDefault(new ResourceLocation(getEntityID(nbt))).create(world);
     if (withInfo) entity.read(nbt);
     return entity;
   }
@@ -135,10 +141,9 @@ public class ItemNet extends Item {
     return getEntityFromNBT(stack.getOrCreateTag().getCompound(KEY),world,withInfo);
   }
 
-  public static CompoundNBT getNBTfromEntity(Entity entity){
+  public static CompoundNBT getNBTfromEntity(Entity entity) {
     CompoundNBT nbt = new CompoundNBT();
     nbt.putString("entity", entity.getType().getRegistryName().toString());
-    nbt.putString("id", EntityType.getKey(entity.getType()).toString());
     entity.writeUnlessPassenger(nbt);
     return nbt;
   }

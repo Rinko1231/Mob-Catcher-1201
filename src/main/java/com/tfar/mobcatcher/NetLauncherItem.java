@@ -13,9 +13,9 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 
-public class ItemNetLauncher extends Item {
+public class NetLauncherItem extends Item {
 
-  public ItemNetLauncher(Properties properties) {
+  public NetLauncherItem(Properties properties) {
     super(properties);
   }
 
@@ -77,7 +77,7 @@ public class ItemNetLauncher extends Item {
         if (f >= 0.1) {
 
           if (!worldIn.isRemote) {
-            ItemNet itemNet = stackAmmo.getItem() instanceof ItemNet ? (ItemNet)stackAmmo.getItem() : (ItemNet)MobCatcher.net_item;
+            NetItem itemNet = stackAmmo.getItem() instanceof NetItem ? (NetItem)stackAmmo.getItem() : (NetItem)MobCatcher.net_item;
             NetEntity netEntity = itemNet.createNet(worldIn, player, stackAmmo);
             netEntity.func_234612_a_(player, player.rotationPitch, player.rotationYaw, 0.0F, f * 3.0F, 0);
 
@@ -148,10 +148,10 @@ public class ItemNetLauncher extends Item {
     return stack.getOrCreateTag().getBoolean("capture");
   }
   public static boolean isEmptyNet(ItemStack stack) {
-    return stack.getItem() instanceof ItemNet && !ItemNet.containsEntity(stack);
+    return stack.getItem() instanceof NetItem && !NetItem.containsEntity(stack);
   }
   public static boolean isFilledNet(ItemStack stack){
-    return stack.getItem() instanceof ItemNet && ItemNet.containsEntity(stack);
+    return stack.getItem() instanceof NetItem && NetItem.containsEntity(stack);
   }
 
 }
