@@ -1,31 +1,25 @@
-package com.tfar.mobcatcher;
+package tfar.mobcatcher;
 
-import com.tfar.mobcatcher.datagen.ModDatagen;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.SpriteRenderer;
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.dispenser.ProjectileDispenseBehavior;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tags.EntityTypeTags;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
+import tfar.mobcatcher.datagen.ModDatagen;
+import net.minecraft.core.Position;
+import net.minecraft.core.Registry;
+import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -37,8 +31,11 @@ import javax.annotation.Nonnull;
 public class MobCatcher {
   public static final String MODID = "mobcatcher";
 
-  public static final ITag.INamedTag<EntityType<?>> blacklisted = EntityTypeTags.bind(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
+  public static final TagKey<EntityType<?>> blacklisted = create(new ResourceLocation(MobCatcher.MODID,"blacklisted").toString());
 
+  private static TagKey<EntityType<?>> create(String pName) {
+    return TagKey.create(Registry.ENTITY_TYPE_REGISTRY, new ResourceLocation(pName));
+  }
   public MobCatcher() {
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
     IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -49,12 +46,12 @@ public class MobCatcher {
     bus.addListener(this::configChange);
   }
 
-  private void configChange(ModConfig.ModConfigEvent e) {
+  private void configChange(ModConfigEvent e) {
     if (e.getConfig().getModId().equals(MODID)) {
       int durability = ServerConfig.net_durability.get();
       if (durability > -1) {
-        net_item.maxStackSize = 1;
-        net_item.maxDamage = durability;
+        Objs.net_item.maxStackSize = 1;
+        Objs.net_item.maxDamage = durability;
       }
     }
   }
@@ -70,10 +67,8 @@ public class MobCatcher {
 
     public void registerItems(RegistryEvent.Register<Item> e) {
       IForgeRegistry<Item> registry = e.getRegistry();
-      Item.Properties properties = new Item.Properties().tab(ItemGroup.TAB_COMBAT);
-
-      registerItem(net_item, "net", registry);
-      registerItem(new NetLauncherItem(properties), "net_launcher", registry);
+      registerItem(Objs.net_item, "net", registry);
+      registerItem(Objs.net_launcher, "net_launcher", registry);
     }
 
     private static void registerItem(Item item, String name, IForgeRegistry<Item> registry) {
@@ -81,32 +76,23 @@ public class MobCatcher {
     }
 
     public void registerEntity(RegistryEvent.Register<EntityType<?>> e) {
-      e.getRegistry().register(net.setRegistryName("net"));
+      e.getRegistry().register(Objs.net.setRegistryName("net"));
     }
 
     public void init(FMLCommonSetupEvent event) {
-      DispenserBlock.registerBehavior(net_item, new ProjectileDispenseBehavior() {
+      DispenserBlock.registerBehavior(Objs.net_item, new AbstractProjectileDispenseBehavior() {
         /**
          * Return the projectile entity spawned by this dispense behavior.
          */
         @Nonnull
         @Override
-        protected ProjectileEntity getProjectile(@Nonnull World world, @Nonnull IPosition pos, @Nonnull ItemStack stack) {
+        protected Projectile getProjectile(@Nonnull Level world, @Nonnull Position pos, @Nonnull ItemStack stack) {
           ItemStack newStack = stack.copy();
           newStack.setCount(1);
           return new NetEntity(pos.x(), pos.y(), pos.z(), world, newStack);
         }
       });
     }
-
-  public static EntityType<NetEntity> net = EntityType.Builder
-          .<NetEntity>of(NetEntity::new, EntityClassification.MISC)
-          .setShouldReceiveVelocityUpdates(true)
-          .setUpdateInterval(1)
-          .setTrackingRange(128)
-          .sized(.6f, .6f)
-          .build("net");
-  public static Item net_item = new NetItem(new Item.Properties().tab(ItemGroup.TAB_COMBAT));
 
 
   public static class ServerConfig {
@@ -121,12 +107,4 @@ public class MobCatcher {
     }
   }
 
-  @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-  @SuppressWarnings("unused")
-  public static class ClientEvents {
-    @SubscribeEvent
-    public static void registerModels(FMLClientSetupEvent event) {
-      RenderingRegistry.registerEntityRenderingHandler(net, render -> new SpriteRenderer<>(render, Minecraft.getInstance().getItemRenderer()));
-    }
-  }
 }

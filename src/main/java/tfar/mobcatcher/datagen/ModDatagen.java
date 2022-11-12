@@ -1,15 +1,15 @@
-package com.tfar.mobcatcher.datagen;
+package tfar.mobcatcher.datagen;
 
-import com.tfar.mobcatcher.datagen.providers.data.tags.ModBlockTagsProvider;
-import com.tfar.mobcatcher.datagen.providers.data.tags.ModEntityTypeTagsProvider;
-import com.tfar.mobcatcher.datagen.providers.data.tags.ModItemTagsProvider;
-import com.tfar.mobcatcher.datagen.providers.ModRecipeProvider;
-import com.tfar.mobcatcher.datagen.providers.assets.ModItemModelProvider;
-import com.tfar.mobcatcher.datagen.providers.assets.ModLangProvider;
-import net.minecraft.data.BlockTagsProvider;
+import tfar.mobcatcher.datagen.providers.data.tags.ModBlockTagsProvider;
+import tfar.mobcatcher.datagen.providers.data.tags.ModEntityTypeTagsProvider;
+import tfar.mobcatcher.datagen.providers.data.tags.ModItemTagsProvider;
+import tfar.mobcatcher.datagen.providers.ModRecipeProvider;
+import tfar.mobcatcher.datagen.providers.assets.ModItemModelProvider;
+import tfar.mobcatcher.datagen.providers.assets.ModLangProvider;
+import net.minecraft.data.tags.BlockTagsProvider;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
+import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
 
 public class ModDatagen {
     public static void start(GatherDataEvent e) {

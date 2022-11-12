@@ -1,9 +1,9 @@
-package com.tfar.mobcatcher.datagen.providers.assets;
+package tfar.mobcatcher.datagen.providers.assets;
 
-import com.tfar.mobcatcher.MobCatcher;
-import net.minecraft.block.Block;
+import tfar.mobcatcher.MobCatcher;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.codehaus.plexus.util.StringUtils;
 

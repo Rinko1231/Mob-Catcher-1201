@@ -1,12 +1,12 @@
-package com.tfar.mobcatcher.datagen.providers.assets;
+package tfar.mobcatcher.datagen.providers.assets;
 
-import com.tfar.mobcatcher.MobCatcher;
+import tfar.mobcatcher.MobCatcher;
 import net.minecraft.data.DataGenerator;
 
-import net.minecraft.item.Item;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.world.item.Item;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Registry;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
@@ -33,7 +33,7 @@ public class ModItemModelProvider extends ItemModelProvider {
     protected void makeOneLayerItem(Item item, ResourceLocation texture) {
         String path = Registry.ITEM.getKey(item).getPath();
         if (existingFileHelper.exists(new ResourceLocation(texture.getNamespace(), "item/" + texture.getPath())
-                , ResourcePackType.CLIENT_RESOURCES, ".png", "textures")) {
+                , PackType.CLIENT_RESOURCES, ".png", "textures")) {
             getBuilder(path).parent(getExistingFile(mcLoc("item/generated")))
                     .texture("layer0", new ResourceLocation(texture.getNamespace(), "item/" + texture.getPath()));
         } else {

@@ -1,7 +1,7 @@
-package com.tfar.mobcatcher.datagen.providers.data.tags;
+package tfar.mobcatcher.datagen.providers.data.tags;
 
-import com.tfar.mobcatcher.MobCatcher;
-import net.minecraft.data.BlockTagsProvider;
+import tfar.mobcatcher.MobCatcher;
+import net.minecraft.data.tags.BlockTagsProvider;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
