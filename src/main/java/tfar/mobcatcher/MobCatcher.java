@@ -1,5 +1,7 @@
 package tfar.mobcatcher;
 
+import net.minecraft.resources.ResourceKey;
+import net.minecraftforge.registries.RegisterEvent;
 import tfar.mobcatcher.datagen.ModDatagen;
 import net.minecraft.core.Position;
 import net.minecraft.core.Registry;
@@ -8,13 +10,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -22,7 +21,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.IForgeRegistry;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -40,8 +38,7 @@ public class MobCatcher {
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
     IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
     bus.addListener(ModDatagen::start);
-    bus.addGenericListener(Item.class,this::registerItems);
-    bus.addGenericListener(EntityType.class,this::registerEntity);
+    bus.addListener(this::registerItems);
     bus.addListener(this::init);
     bus.addListener(this::configChange);
   }
@@ -65,18 +62,14 @@ public class MobCatcher {
     SERVER = specPair2.getLeft();
   }
 
-    public void registerItems(RegistryEvent.Register<Item> e) {
-      IForgeRegistry<Item> registry = e.getRegistry();
-      registerItem(Objs.net_item, "net", registry);
-      registerItem(Objs.net_launcher, "net_launcher", registry);
+    public void registerItems(RegisterEvent e) {
+      registerOb(e,Registry.ITEM_REGISTRY,"net", Objs.net_item);
+      registerOb(e,Registry.ITEM_REGISTRY,"net_launcher", Objs.net_launcher);
+      registerOb(e,Registry.ENTITY_TYPE_REGISTRY,"net",Objs.net);
     }
 
-    private static void registerItem(Item item, String name, IForgeRegistry<Item> registry) {
-      registry.register(item.setRegistryName(name));
-    }
-
-    public void registerEntity(RegistryEvent.Register<EntityType<?>> e) {
-      e.getRegistry().register(Objs.net.setRegistryName("net"));
+    private static <T> void registerOb(RegisterEvent e, ResourceKey<? extends Registry<T>>resourceKey, String name, T obj) {
+      e.register(resourceKey,new ResourceLocation(MODID,name),() ->obj);
     }
 
     public void init(FMLCommonSetupEvent event) {

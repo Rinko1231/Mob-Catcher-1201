@@ -1,22 +1,20 @@
 package tfar.mobcatcher;
 
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.level.Level;
-
-import javax.annotation.Nonnull;
-
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+import javax.annotation.Nonnull;
 
 public class NetLauncherItem extends Item {
 
@@ -58,17 +56,11 @@ public class NetLauncherItem extends Item {
     return ItemStack.EMPTY;
   }
 
-  @Override
-  public int getItemStackLimit(ItemStack stack) {
-    return 1;
-  }
-
   /**
    * Called when the player stops using an Item (stops holding the right mouse button).
    */
   public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
-    if (entityLiving instanceof Player) {
-      Player player = (Player) entityLiving;
+    if (entityLiving instanceof Player player) {
       ItemStack stackAmmo = this.findNet(player);
 
       int i = this.getUseDuration(stackAmmo) - timeLeft;
@@ -129,7 +121,7 @@ public class NetLauncherItem extends Item {
       boolean capture = isCaptureMode(stack);
       nbt.putBoolean("capture",!capture);
       stack.setTag(nbt);
-      player.displayClientMessage(new TranslatableComponent(capture ? "mobcatcher.releasing" : "mobcatcher.capturing"),true);
+      player.displayClientMessage(capture? RELEASE: CAPTURE,true);
       return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
     }
     boolean hasAmmo = !this.findNet(player).isEmpty();
@@ -142,10 +134,14 @@ public class NetLauncherItem extends Item {
     }
   }
 
+  public static final Component CAPTURE = Component.translatable("mobcatcher.capturing");
+  public static final Component RELEASE = Component.translatable("mobcatcher.releasing");
+
   @Override
   @Nonnull
   public Component getName(@Nonnull ItemStack stack) {
-    return new TranslatableComponent(I18n.get(super.getDescriptionId(stack)) + " ("+I18n.get(isCaptureMode(stack) ? "mobcatcher.capturing": "mobcatcher.releasing")+ ")");
+    MutableComponent base = (MutableComponent) super.getName(stack);
+    return base.append(" (").append(isCaptureMode(stack) ? CAPTURE : RELEASE).append(")");
   }
 
   //helpers

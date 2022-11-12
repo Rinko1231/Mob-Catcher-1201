@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -87,7 +86,7 @@ public class NetItem extends Item {
       String id = holder.getString("id");
       EntityType<?> type = Registry.ENTITY_TYPE.get(new ResourceLocation(id));
       tooltip.add(type.getDescription());
-      tooltip.add(new TextComponent("Health: " + getEntityData(stack).getDouble("Health")));
+      tooltip.add(Component.translatable("mobcatcher.health").append(": "+ getEntityData(stack).getDouble("Health")));
     }
   }
 
