@@ -2,7 +2,6 @@ package tfar.mobcatcher;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -12,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -37,6 +38,8 @@ public class NetItem extends Item {
     super(properties);
   }
 
+
+
   @Override
   @Nonnull
   public InteractionResult useOn(UseOnContext context) {
@@ -51,7 +54,7 @@ public class NetItem extends Item {
     stack.setTag(null);
     world.addFreshEntity(entity);
     if (this.canBeDepleted()) {
-      stack.hurtAndBreak(1,player,playerEntity -> playerEntity.broadcastBreakEvent(context.getHand()));
+      stack.hurtAndBreak(1,player,(playerE)-> playerE.broadcastBreakEvent(EquipmentSlot.MAINHAND));
     }
     return InteractionResult.SUCCESS;
   }
@@ -61,7 +64,8 @@ public class NetItem extends Item {
     if (target.getCommandSenderWorld().isClientSide || target instanceof Player || !target.isAlive() || containsEntity(stack))
       return InteractionResult.FAIL;
     EntityType<?> entityID = target.getType();
-    if (isBlacklisted(entityID)) return InteractionResult.FAIL;
+    String entityId = ForgeRegistries.ENTITY_TYPES.getKey(entityID).toString();
+    if (isBlacklisted(entityID) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return InteractionResult.FAIL;
     ItemStack newStack = stack.copy();
     CompoundTag nbt = getNBTfromEntity(target);
     ItemStack newerStack = newStack.split(1);
@@ -69,8 +73,8 @@ public class NetItem extends Item {
     player.swing(hand);
     player.setItemInHand(hand, newStack);
     if(!player.addItem(newerStack)){
-      ItemEntity itemEntity = new ItemEntity(player.level,player.getX(),player.getY(),player.getZ(),newerStack);
-      player.level.addFreshEntity(itemEntity);
+      ItemEntity itemEntity = new ItemEntity(player.level(),player.getX(),player.getY(),player.getZ(),newerStack);
+      player.level().addFreshEntity(itemEntity);
     }
     target.discard();
     player.getCooldowns().addCooldown(this, 5);
@@ -84,7 +88,7 @@ public class NetItem extends Item {
     if (containsEntity(stack)) {
       CompoundTag holder = getEntityData(stack);
       String id = holder.getString("id");
-      EntityType<?> type = Registry.ENTITY_TYPE.get(new ResourceLocation(id));
+      EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(id));
       tooltip.add(type.getDescription());
       tooltip.add(Component.translatable("mobcatcher.health").append(": "+ getEntityData(stack).getDouble("Health")));
     }
@@ -104,7 +108,7 @@ public class NetItem extends Item {
       }
     }
     String id = holder.getString("id");
-    EntityType<?> type = Registry.ENTITY_TYPE.get(new ResourceLocation(id));
+    EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(id));
     return type.getDescription();
   }
 
@@ -145,7 +149,7 @@ public class NetItem extends Item {
   }
 
   public static Entity getEntityFromNBT(CompoundTag nbt, Level world, boolean withInfo) {
-    Entity entity = Registry.ENTITY_TYPE.get(new ResourceLocation(getEntityID(nbt))).create(world);
+    Entity entity = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(getEntityID(nbt))).create(world);
     if (withInfo) entity.load(nbt);
     return entity;
   }

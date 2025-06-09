@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 
@@ -42,11 +43,11 @@ public class NetEntity extends ThrowableItemProjectile {
    */
   @Override
   protected void onHit(@Nonnull HitResult result) {
-    if (level.isClientSide || !this.isAlive()) return;
+    if (level().isClientSide || !this.isAlive()) return;
     HitResult.Type type = result.getType();
     boolean containsEntity = NetItem.containsEntity(stack);
     if (containsEntity) {
-      Entity entity = NetItem.getEntityFromStack(stack, level, true);
+      Entity entity = NetItem.getEntityFromStack(stack, level(), true);
       BlockPos pos;
       if (type == HitResult.Type.ENTITY)
         pos = ((EntityHitResult) result).getEntity().blockPosition();
@@ -54,9 +55,9 @@ public class NetEntity extends ThrowableItemProjectile {
         pos = ((BlockHitResult) result).getBlockPos();
       entity.absMoveTo(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0, 0);
       stack.removeTagKey(NetItem.KEY);
-      level.addFreshEntity(entity);
+      level().addFreshEntity(entity);
       ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
-      level.addFreshEntity(emptynet);
+      level().addFreshEntity(emptynet);
       if (stack.isDamageableItem()) {
         Entity owner = this.getOwner();
         if (owner instanceof LivingEntity) {
@@ -68,24 +69,27 @@ public class NetEntity extends ThrowableItemProjectile {
       if (type == HitResult.Type.ENTITY) {
         EntityHitResult entityRayTrace = (EntityHitResult) result;
         Entity target = entityRayTrace.getEntity();
-        if (!target.isAlive() || NetItem.isBlacklisted(target.getType())) return;
+
+        String entityId = ForgeRegistries.ENTITY_TYPES.getKey(target.getType()).toString();
+        // 检查该实体是否在黑名单中
+        if (!(target instanceof LivingEntity) || !target.isAlive() || NetItem.isBlacklisted(target.getType()) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return;
 
         CompoundTag nbt = NetItem.getNBTfromEntity(target);
         ItemStack newStack = stack.copy();
         newStack.getOrCreateTag().put(NetItem.KEY,nbt);
         ItemEntity itemEntity = createDroppedItemAtEntity(target,newStack);
-        level.addFreshEntity(itemEntity);
+        level().addFreshEntity(itemEntity);
         target.discard();
       } else {
         ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
-        level.addFreshEntity(emptynet);
+        level().addFreshEntity(emptynet);
       }
     }
     this.discard();
   }
 
   protected ItemEntity createDroppedItemAtEntity(Entity entity,ItemStack stack) {
-    return new ItemEntity(this.level, entity.getX(), entity.getY(), entity.getZ(), stack);
+    return new ItemEntity(this.level(), entity.getX(), entity.getY(), entity.getZ(), stack);
   }
 
   public void addAdditionalSaveData(CompoundTag nbt) {
