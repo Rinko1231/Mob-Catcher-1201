@@ -4,11 +4,11 @@ license="Unlicense"
 [[mods]] #mandatory
 modId="mobcatcher" #mandatory
 version="1.20.1-6" #mandatory
-displayName="Mob Catcher" #mandatory
+displayName="Mob Catcher Unofficial" #mandatory
 credits = "Tfarcenim"
 authors="Rinko1231" #optional
 description='''
-Mob Catcher
+Mob Catcher 1.20.1 Unofficial
 '''
 
 [[dependencies.mobcatcher]] #optional
