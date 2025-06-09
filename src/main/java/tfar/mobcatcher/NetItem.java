@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -53,7 +54,7 @@ public class NetItem extends Item {
     stack.setTag(null);
     world.addFreshEntity(entity);
     if (this.canBeDepleted()) {
-      stack.hurtAndBreak(1,player,playerEntity -> playerEntity.broadcastBreakEvent(context.getHand()));
+      stack.hurtAndBreak(1,player,(playerE)-> playerE.broadcastBreakEvent(EquipmentSlot.MAINHAND));
     }
     return InteractionResult.SUCCESS;
   }
@@ -63,7 +64,8 @@ public class NetItem extends Item {
     if (target.getCommandSenderWorld().isClientSide || target instanceof Player || !target.isAlive() || containsEntity(stack))
       return InteractionResult.FAIL;
     EntityType<?> entityID = target.getType();
-    if (isBlacklisted(entityID)) return InteractionResult.FAIL;
+    String entityId = ForgeRegistries.ENTITY_TYPES.getKey(entityID).toString();
+    if (isBlacklisted(entityID) ||MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return InteractionResult.FAIL;
     ItemStack newStack = stack.copy();
     CompoundTag nbt = getNBTfromEntity(target);
     ItemStack newerStack = newStack.split(1);

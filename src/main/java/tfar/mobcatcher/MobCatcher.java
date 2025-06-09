@@ -26,6 +26,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 @Mod(value = MobCatcher.MODID)
 public class MobCatcher {
@@ -50,14 +51,14 @@ public class MobCatcher {
       int durability = ServerConfig.net_durability.get();
       if (durability > -1) {
         Objs.net_item.maxStackSize = 1;
-        Objs.net_item.maxDamage = durability;
+        //Objs.net_item.maxDamage = durability;
       }
     }
   }
 
   private void addItemsToTabs(BuildCreativeModeTabContentsEvent event)
   {
-    if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES)
+    if (event.getTabKey() == CreativeModeTabs.COMBAT)
     {
       event.accept( Objs.net_item);
       event.accept( Objs.net_launcher);
@@ -103,11 +104,18 @@ public class MobCatcher {
   public static class ServerConfig {
 
     public static ForgeConfigSpec.IntValue net_durability;
+    public static ForgeConfigSpec.ConfigValue<List<? extends String>> entityBlacklist;
 
     public ServerConfig(ForgeConfigSpec.Builder builder) {
       builder.push("general");
       net_durability = builder.comment("Number of uses before mob catcher breaks, damaged every time a mob is released, -1 disables durability, numbers above will set stack size to 1")
+              .comment("Note: Currently durability setting will not take effect, but you can use it to set the stack size to 1")
               .defineInRange("net_durability", -1, -1, Integer.MAX_VALUE);
+      entityBlacklist = builder
+              .comment("Living Entity Blacklist")
+              .comment("Entities that will not be captured, you can also use tag")
+              .defineList("Entity Blacklist", List.of("corpse:corpse", "minecraft:wither", "minecraft:ender_dragon"),
+                      element -> element instanceof String);
       builder.pop();
     }
   }

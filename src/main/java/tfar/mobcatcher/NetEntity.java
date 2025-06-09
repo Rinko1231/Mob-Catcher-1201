@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 
@@ -68,7 +69,11 @@ public class NetEntity extends ThrowableItemProjectile {
       if (type == HitResult.Type.ENTITY) {
         EntityHitResult entityRayTrace = (EntityHitResult) result;
         Entity target = entityRayTrace.getEntity();
-        if (!target.isAlive() || NetItem.isBlacklisted(target.getType())) return;
+
+
+        String entityId = ForgeRegistries.ENTITY_TYPES.getKey(target.getType()).toString();
+        // 检查该实体是否在黑名单中
+        if (!target.isAlive() || NetItem.isBlacklisted(target.getType()) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return;
 
         CompoundTag nbt = NetItem.getNBTfromEntity(target);
         ItemStack newStack = stack.copy();
