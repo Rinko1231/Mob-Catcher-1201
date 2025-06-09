@@ -77,7 +77,7 @@ public class NetLauncherItem extends Item {
             NetItem itemNet = stackAmmo.getItem() instanceof NetItem ? (NetItem)stackAmmo.getItem() : (NetItem) Objs.net_item;
             NetEntity netEntity = itemNet.createNet(worldIn, player, stackAmmo);
             netEntity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, f * 3.0F, 0);
-
+            netEntity.setOwner(player);
             worldIn.addFreshEntity(netEntity);
           }
 

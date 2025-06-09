@@ -51,7 +51,7 @@ public class NetItem extends Item {
     Entity entity = getEntityFromStack(stack, world, true);
     BlockPos blockPos = context.getClickedPos();
     entity.absMoveTo(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, 0, 0);
-    stack.setTag(null);
+    stack.removeTagKey(NetItem.KEY);
     world.addFreshEntity(entity);
     if (this.canBeDepleted()) {
       stack.hurtAndBreak(1,player,(playerE)-> playerE.broadcastBreakEvent(EquipmentSlot.MAINHAND));
@@ -65,7 +65,7 @@ public class NetItem extends Item {
       return InteractionResult.FAIL;
     EntityType<?> entityID = target.getType();
     String entityId = ForgeRegistries.ENTITY_TYPES.getKey(entityID).toString();
-    if (isBlacklisted(entityID) ||MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return InteractionResult.FAIL;
+    if (isBlacklisted(entityID) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return InteractionResult.FAIL;
     ItemStack newStack = stack.copy();
     CompoundTag nbt = getNBTfromEntity(target);
     ItemStack newerStack = newStack.split(1);

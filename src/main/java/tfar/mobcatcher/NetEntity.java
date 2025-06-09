@@ -56,24 +56,28 @@ public class NetEntity extends ThrowableItemProjectile {
       entity.absMoveTo(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0, 0);
       stack.removeTagKey(NetItem.KEY);
       level().addFreshEntity(entity);
-      ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
-      level().addFreshEntity(emptynet);
+
       if (stack.isDamageableItem()) {
         Entity owner = this.getOwner();
         if (owner instanceof LivingEntity) {
+          //if (owner instanceof Player pp) {pp.displayClientMessage(Component.literal("test"),true);}
           stack.hurtAndBreak(1, (LivingEntity)owner, playerEntity -> {
           });
         }
       }
+
+      ItemEntity emptynet = createDroppedItemAtEntity(this,stack.copy());
+      level().addFreshEntity(emptynet);
+
+
     } else {
       if (type == HitResult.Type.ENTITY) {
         EntityHitResult entityRayTrace = (EntityHitResult) result;
         Entity target = entityRayTrace.getEntity();
 
-
         String entityId = ForgeRegistries.ENTITY_TYPES.getKey(target.getType()).toString();
         // 检查该实体是否在黑名单中
-        if (!target.isAlive() || NetItem.isBlacklisted(target.getType()) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return;
+        if (!(target instanceof LivingEntity) || !target.isAlive() || NetItem.isBlacklisted(target.getType()) || MobCatcher.ServerConfig.entityBlacklist.get().contains(entityId)) return;
 
         CompoundTag nbt = NetItem.getNBTfromEntity(target);
         ItemStack newStack = stack.copy();
