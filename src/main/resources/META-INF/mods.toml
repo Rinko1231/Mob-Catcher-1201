@@ -1,0 +1,27 @@
+modLoader="javafml" #mandatory
+loaderVersion="[43,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+license="MIT"
+[[mods]] #mandatory
+modId="mobcatcher" #mandatory
+version="1.20.1-6" #mandatory
+displayName="Mob Catcher" #mandatory
+credits = "Tfarcenim"
+authors="Rinko1231" #optional
+description='''
+Mob Catcher
+
+'''
+logoFile="pack.png"
+
+[[dependencies.mobcatcher]] #optional
+    modId="forge" #mandatory
+    mandatory=true #mandatory
+    versionRange="[43,)" #mandatory
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.mobcatcher]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,)"
+    ordering="NONE"
+    side="BOTH"
