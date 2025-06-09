@@ -51,7 +51,7 @@ public class MobCatcher {
       int durability = ServerConfig.net_durability.get();
       if (durability > -1) {
         Objs.net_item.maxStackSize = 1;
-        //Objs.net_item.maxDamage = durability;
+        Objs.net_item.maxDamage = durability;
       }
     }
   }
@@ -109,7 +109,7 @@ public class MobCatcher {
     public ServerConfig(ForgeConfigSpec.Builder builder) {
       builder.push("general");
       net_durability = builder.comment("Number of uses before mob catcher breaks, damaged every time a mob is released, -1 disables durability, numbers above will set stack size to 1")
-              .comment("Note: Currently durability setting will not take effect, but you can use it to set the stack size to 1")
+              //.comment("Note: Currently durability setting will not take effect, but you can use it to set the stack size to 1")
               .defineInRange("net_durability", -1, -1, Integer.MAX_VALUE);
       entityBlacklist = builder
               .comment("Living Entity Blacklist")
