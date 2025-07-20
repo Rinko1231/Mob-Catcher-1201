@@ -7,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
 import org.jetbrains.annotations.NotNull;
+import tfar.mobcatcher.config.ServerConfig;
 
 public class NetDispenserBehavior extends DefaultDispenseItemBehavior {
 
@@ -20,7 +21,7 @@ public class NetDispenserBehavior extends DefaultDispenseItemBehavior {
         ItemStack netStack = stack.copy();
         netStack.setCount(1);
         NetEntity netEntity = new NetEntity(x, y, z, level, netStack);
-        netEntity.shoot(direction.getStepX(), direction.getStepY(), direction.getStepZ(), 1.1F, 6.0F);
+        netEntity.shoot(direction.getStepX(), direction.getStepY(), direction.getStepZ(), ServerConfig.dispenserVelocity.get().floatValue(), ServerConfig.dispenserInaccuracy.get().floatValue());
         level.addFreshEntity(netEntity);
         stack.shrink(1);
         return stack;

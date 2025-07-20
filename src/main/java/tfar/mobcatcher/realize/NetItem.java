@@ -1,6 +1,5 @@
 package tfar.mobcatcher.realize;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
@@ -27,7 +26,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.util.LogicalSidedProvider;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import org.slf4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import tfar.mobcatcher.MobCatcher;
 import tfar.mobcatcher.client.EntityTooltip;
 import tfar.mobcatcher.config.ServerConfig;
@@ -36,13 +35,8 @@ import tfar.mobcatcher.init.ModDataComponents;
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class NetItem extends Item {
-
-    public static final String KEY = "entity_holder";
-    private static final Logger LOGGER = LogUtils.getLogger();
-    static Set<String> warned;
 
 
     public NetItem(Properties properties) {
@@ -68,7 +62,7 @@ public class NetItem extends Item {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(@NotNull ItemStack stack, Item.@NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flagIn) {
         super.appendHoverText(stack, context, tooltip, flagIn);
     }
 
@@ -136,7 +130,7 @@ public class NetItem extends Item {
     }
 
     @Override
-    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+    public InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, LivingEntity target, @NotNull InteractionHand hand) {
         if (target.getCommandSenderWorld().isClientSide || target instanceof Player || !target.isAlive() || containsEntity(stack))
             return InteractionResult.FAIL;
         EntityType<?> entityID = target.getType();
@@ -145,8 +139,15 @@ public class NetItem extends Item {
             return InteractionResult.FAIL;
         CompoundTag nbt = getNBTfromEntity(target);
         if (stack.getCount() == 1) {
-            // 只有一个网：直接写入实体 NBT
-            stack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
+            if (player.isCreative()) {
+                // 创造模式：生成一个新的 Stack 并替换玩家手中的物品
+                ItemStack newStack = stack.copy();
+                newStack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
+                player.setItemInHand(hand, newStack);
+            } else {
+                // 生存模式：直接写入原来的 stack
+                stack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
+            }
 
         } else {
             // 多个网：分出一个并放到玩家物品栏

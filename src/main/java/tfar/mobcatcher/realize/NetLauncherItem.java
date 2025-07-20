@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import tfar.mobcatcher.config.ServerConfig;
 import tfar.mobcatcher.init.ModDataComponents;
 import tfar.mobcatcher.init.ModItems;
 
@@ -92,7 +94,7 @@ public class NetLauncherItem extends Item {
      * Called when the player stops using an Item (stops holding the right mouse button).
      */
     @Override
-    public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
+    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level worldIn, @NotNull LivingEntity entityLiving, int timeLeft) {
         if (!(entityLiving instanceof Player player)) return;
 
         // 找玩家物品栏里符合当前模式的捕捉网
@@ -114,7 +116,7 @@ public class NetLauncherItem extends Item {
             }
 
             NetEntity netEntity = new NetEntity(worldIn, player, netStackCopy);
-            netEntity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity * 1.5F, 0.0F);
+            netEntity.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity * ServerConfig.launcherVelocityMultiplier.get().floatValue(), 0.0F);
             worldIn.addFreshEntity(netEntity);
 
             // 调试输出
@@ -133,7 +135,7 @@ public class NetLauncherItem extends Item {
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
-    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+    public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity) {
         return 72000;
     }
 
@@ -142,7 +144,7 @@ public class NetLauncherItem extends Item {
      */
     @Nonnull
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player player, @Nonnull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@NotNull Level worldIn, Player player, @Nonnull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isCrouching()) {
             boolean current = isCaptureMode(stack); // 获取当前状态
