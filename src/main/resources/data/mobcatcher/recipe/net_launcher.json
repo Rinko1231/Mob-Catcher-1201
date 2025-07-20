@@ -13,7 +13,7 @@
       "item": "minecraft:bow"
     },
     "i": {
-      "tag": "forge:ingots/iron"
+      "tag": "c:ingots/iron"
     }
   },
   "result": {
