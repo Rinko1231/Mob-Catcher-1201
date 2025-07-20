@@ -2,7 +2,6 @@ package tfar.mobcatcher.realize;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -17,19 +16,25 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.util.LogicalSidedProvider;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import tfar.mobcatcher.MobCatcher;
+import tfar.mobcatcher.client.EntityTooltip;
 import tfar.mobcatcher.config.ServerConfig;
 import tfar.mobcatcher.init.ModDataComponents;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -54,31 +59,27 @@ public class NetItem extends Item {
         CompoundTag holder = getEntityData(stack);
         if (holder.contains("CustomName", Tag.TAG_STRING)) {
             String s = holder.getString("CustomName");
-            try {
-                return Component.Serializer.fromJson(s, registryAccess());
-            } catch (Exception exception) {
-                if (!warned.contains(s)) {
-                    LOGGER.warn("Failed to parse entity custom name {}", s, exception);
-                    warned.add(s);
-                }
-            }
+            return Component.Serializer.fromJson(s, registryAccess());
         }
         String id = holder.getString("id");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id));
         return type.getDescription();
     }
-/*
-  @OnlyIn(Dist.CLIENT)
-  public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-    super.appendHoverText(stack, worldIn, tooltip, flagIn);
-    if (containsEntity(stack)) {
-      CompoundTag holder = getEntityData(stack);
-      String id = holder.getString("id");
-        EntityType<?> type = (EntityType)BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id));
-      tooltip.add(type.getDescription());
-      tooltip.add(Component.translatable("mobcatcher.health").append(": "+ getEntityData(stack).getDouble("Health")));
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+        super.appendHoverText(stack, context, tooltip, flagIn);
     }
-  }*/
+
+    @Override
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        if (containsEntity(stack)) {
+            CompoundTag entityData = getEntityData(stack);
+            return Optional.of(new EntityTooltip(entityData));
+        }
+        return Optional.empty();
+    }
 
     public static boolean containsEntity(ItemStack stack) {
         CompoundTag tag = stack.get(ModDataComponents.ENTITY_HOLDER.get());
@@ -138,13 +139,10 @@ public class NetItem extends Item {
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
         if (target.getCommandSenderWorld().isClientSide || target instanceof Player || !target.isAlive() || containsEntity(stack))
             return InteractionResult.FAIL;
-
         EntityType<?> entityID = target.getType();
         String entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityID).toString();
         if (isBlacklisted(entityID) || ServerConfig.entityBlacklist.get().contains(entityId))
             return InteractionResult.FAIL;
-
-
         CompoundTag nbt = getNBTfromEntity(target);
         if (stack.getCount() == 1) {
             // 只有一个网：直接写入实体 NBT
@@ -159,7 +157,6 @@ public class NetItem extends Item {
                 player.level().addFreshEntity(itemEntity);
             }
         }
-
         player.swing(hand);
         target.discard();
         player.getCooldowns().addCooldown(this, 5);
@@ -176,7 +173,6 @@ public class NetItem extends Item {
         } else {
             baseName = super.getName(stack);
         }
-
         if (!containsEntity(stack)) {
             return baseName;
         } else {

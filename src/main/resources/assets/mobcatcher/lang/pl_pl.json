@@ -1,4 +1,8 @@
 {
   "item.mobcatcher.net_launcher": "Wyrzutnia do urządzeń do przychwytywania bytów",
-  "item.mobcatcher.net": "Urządzenie do przychwytywania bytów"
+  "item.mobcatcher.net": "Urządzenie do przychwytywania bytów",
+  "mobcatcher.capturing": "Łapanie",
+  "mobcatcher.health": "Zdrowie",
+  "mobcatcher.releasing": "Uwalnianie",
+  "item.mobcatcher.net.with_entity": "%1$s (%2$s)"
 }

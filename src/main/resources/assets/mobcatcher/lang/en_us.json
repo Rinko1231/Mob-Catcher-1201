@@ -1,8 +1,8 @@
 {
-  "item.mobcatcher.net_launcher": "Mob Capture Device Launcher",
-  "item.mobcatcher.net": "Mob Capture Device",
-  "mobcatcher.capturing" : "Capturing",
-  "mobcatcher.releasing" : "Releasing",
-  "mobcatcher.health" : "Health",
+  "item.mobcatcher.net_launcher": "Net Launcher",
+  "item.mobcatcher.net": "Net",
+  "mobcatcher.capturing": "Capturing",
+  "mobcatcher.health": "Health",
+  "mobcatcher.releasing": "Releasing",
   "item.mobcatcher.net.with_entity": "%1$s (%2$s)"
 }

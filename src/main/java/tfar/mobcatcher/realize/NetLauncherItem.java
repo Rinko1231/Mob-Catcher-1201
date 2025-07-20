@@ -38,11 +38,7 @@ public class NetLauncherItem extends Item {
 
     //helpers
     public static boolean isCaptureMode(ItemStack stack) {
-        // 使用 .get() 获取 CAPTURE_MODE 对应的 Boolean 值
-        Boolean value = stack.get(ModDataComponents.CAPTURE_MODE.get());
-
-        // 如果为 null，默认返回 false，否则返回实际值
-        return value != null && value;
+        return getCaptureMode(stack);
     }
 
     public static boolean isEmptyNet(ItemStack stack) {
@@ -155,7 +151,6 @@ public class NetLauncherItem extends Item {
             return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
         }
         boolean hasAmmo = !this.findNet(player).isEmpty();
-
         if (!player.getAbilities().instabuild && !hasAmmo) {
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         } else {
