@@ -1,7 +1,9 @@
 package tfar.mobcatcher.realize;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -15,48 +17,28 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ProjectileItem;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.util.LogicalSidedProvider;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import tfar.mobcatcher.MobCatcher;
 import tfar.mobcatcher.config.ServerConfig;
 import tfar.mobcatcher.init.ModDataComponents;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class NetItem extends Item implements ProjectileItem {
+public class NetItem extends Item {
 
     public static final String KEY = "entity_holder";
     private static final Logger LOGGER = LogUtils.getLogger();
     static Set<String> warned;
 
-    @Override
-    public Projectile asProjectile(Level level, Position pos, ItemStack stack, Direction direction) {
-        NetEntity entity = new NetEntity(pos.x(), pos.y(), pos.z(), level, stack.copyWithCount(1));
-        return entity;
-    }
-
-    @Override
-    public DispenseConfig createDispenseConfig() {
-        // 默认即可，除非你想调节速度或偏移量
-        return ProjectileItem.DispenseConfig.DEFAULT;
-    }
 
     public NetItem(Properties properties) {
         super(properties);
@@ -85,10 +67,10 @@ public class NetItem extends Item implements ProjectileItem {
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id));
         return type.getDescription();
     }
-
+/*
   @OnlyIn(Dist.CLIENT)
-  public void appendHoverText(ItemStack stack, @NotNull TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
-    super.appendHoverText(stack, context, tooltip, flagIn);
+  public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+    super.appendHoverText(stack, worldIn, tooltip, flagIn);
     if (containsEntity(stack)) {
       CompoundTag holder = getEntityData(stack);
       String id = holder.getString("id");
@@ -96,7 +78,7 @@ public class NetItem extends Item implements ProjectileItem {
       tooltip.add(type.getDescription());
       tooltip.add(Component.translatable("mobcatcher.health").append(": "+ getEntityData(stack).getDouble("Health")));
     }
-  }
+  }*/
 
     public static boolean containsEntity(ItemStack stack) {
         CompoundTag tag = stack.get(ModDataComponents.ENTITY_HOLDER.get());
@@ -146,7 +128,9 @@ public class NetItem extends Item implements ProjectileItem {
         entity.absMoveTo(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5, 0, 0);
         stack.remove(ModDataComponents.ENTITY_HOLDER.get());
         world.addFreshEntity(entity);
-
+        if (isDamageable(stack)) {
+            stack.hurtAndBreak(1, player, player.getMainHandItem().getEquipmentSlot());
+        }
         return InteractionResult.SUCCESS;
     }
 
@@ -163,15 +147,9 @@ public class NetItem extends Item implements ProjectileItem {
 
         CompoundTag nbt = getNBTfromEntity(target);
         if (stack.getCount() == 1) {
-            if (player.isCreative()) {
-                // 创造模式：生成一个新的 Stack 并替换玩家手中的物品
-                ItemStack newStack = stack.copy();
-                newStack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
-                player.setItemInHand(hand, newStack);
-            } else {
-                // 生存模式：直接写入原来的 stack
-                stack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
-            }
+            // 只有一个网：直接写入实体 NBT
+            stack.set(ModDataComponents.ENTITY_HOLDER.get(), nbt);
+
         } else {
             // 多个网：分出一个并放到玩家物品栏
             ItemStack newStack = stack.split(1);
