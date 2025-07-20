@@ -12,12 +12,7 @@ public class ServerConfig {
 
     static {
         BUILDER.push("Config");
-        entityBlacklist = BUILDER
-                .comment("Living Entity Blacklist")
-                .comment("Entities that will not be captured, you can also use tag")
-                .defineList("Entity Blacklist", List.of("corpse:corpse", "minecraft:wither", "minecraft:ender_dragon"),
-                        element -> element instanceof String);
-
+        entityBlacklist = BUILDER.comment("Living Entity Blacklist").comment("Entities that will not be captured, you can also use tag").defineList("Entity Blacklist", List.of("corpse:corpse", "minecraft:wither", "minecraft:ender_dragon"), element -> element instanceof String);
         SPEC = BUILDER.build();
     }
 }
