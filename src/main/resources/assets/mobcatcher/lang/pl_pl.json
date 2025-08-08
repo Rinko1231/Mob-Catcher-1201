@@ -4,5 +4,6 @@
   "mobcatcher.capturing": "Łapanie",
   "mobcatcher.health": "Zdrowie",
   "mobcatcher.releasing": "Uwalnianie",
-  "item.mobcatcher.net.with_entity": "%1$s (%2$s)"
+  "item.mobcatcher.net.with_entity": "%1$s (%2$s)",
+  "mobcatcher.tooltip.hold_shift": "Przytrzymaj SHIFT, aby wyświetlić szczegóły"
 }

@@ -1,6 +1,8 @@
 package tfar.mobcatcher.realize;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
@@ -70,11 +72,18 @@ public class NetItem extends Item {
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
         super.appendHoverText(stack, context, tooltip, flagIn);
+        if (containsEntity(stack)) {
+            if (!Screen.hasShiftDown()) {
+                tooltip.add(Component.translatable("mobcatcher.tooltip.hold_shift")
+                        .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
+        }
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
-        if (containsEntity(stack)) {
+        if (containsEntity(stack) && Screen.hasShiftDown()) {
             CompoundTag entityData = getEntityData(stack);
             return Optional.of(new EntityTooltip(entityData));
         }
