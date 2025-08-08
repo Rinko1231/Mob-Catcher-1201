@@ -4,5 +4,6 @@
   "mobcatcher.capturing": "Capturing",
   "mobcatcher.health": "Health",
   "mobcatcher.releasing": "Releasing",
-  "item.mobcatcher.net.with_entity": "%1$s (%2$s)"
+  "item.mobcatcher.net.with_entity": "%1$s (%2$s)",
+  "mobcatcher.tooltip.hold_shift": "Hold SHIFT for details"
 }
